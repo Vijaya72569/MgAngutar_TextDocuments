@@ -1,0 +1,154 @@
+Angular Directives_Programs
+
+realtime example using ngif in angular
+
+go to visual studio code->open floder->AngularP->go to terminal->new terminal->command prompt->
+AngularP/ng new AngDirectives->enter->css->enter
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngiflogin->enter
+
+ ngiflogin.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngiflogin',
+  templateUrl: './ngiflogin.component.html',
+  styleUrls: ['./ngiflogin.component.css']
+})
+export class NgifloginComponent implements OnInit {
+islogin=false;
+togglelogin(){
+  this.islogin=!this.islogin;
+}
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+app.nglogin.html
+
+<p>ngiflogin works!</p>
+<div>
+    <button *ngIf="!islogin" (click)="togglelogin()">Login</button>
+    <button *ngIf="islogin" (click)="togglelogin()">Logout</button>
+</div>
+<p *ngIf="islogin">Welcome! you are login</p>
+<p *ngIf="!islogin">Please login....</p>
+
+
+app.component.html
+
+<app-nglogin></nglogin>
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng serve
+
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngfor->enter
+ 
+ngfor.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngfor',
+  templateUrl: './ngfor.component.html',
+  styleUrls: ['./ngfor.component.css']
+})
+export class NgforComponent implements OnInit {
+countries:string[]=['India','Usa','Uk','France'];
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+ngfor.component.html
+
+<p>ngfor works!</p>
+<div style="text-align:left;">
+    <h1>Countries</h1>
+    <ul>
+        <li *ngFor="let country of countries">
+            {{country}}
+        </li>
+    </ul>
+
+</div>
+
+app.component.html
+
+<app-ngfor></app-ngfor>
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng serve
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngswitch->enter
+
+
+ngswitch.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngswitch',
+  templateUrl: './ngswitch.component.html',
+  styleUrls: ['./ngswitch.component.css']
+})
+export class NgswitchComponent implements OnInit {
+userRole:string=' ';
+setuserRole(role:string){
+this.userRole=role;
+}
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+ngswitch.component.html
+
+<p>ngswitch works!</p>
+<div style="text-align: left;">
+    <h4>User role Dashboard</h4>
+    <div>
+    <button type="submit" (click)="setuserRole('admin')">Admin</button>&nbsp;
+    <button type="submit" (click)="setuserRole('editor')">Editor</button>&nbsp;    
+    <button type="submit" (click)="setuserRole('viewer')">Viewer</button>
+</div>
+<div [ngSwitch]="userRole">
+    <div *ngSwitchCase="'admin'">
+        <h4>Admin Panel</h4>
+        <p>welcome, Admin! you have full access for all features</p>
+    </div>
+    <div *ngSwitchCase="'editor'">
+        <h4>Edit Panel</h4>
+        <p>welcome, Editor! you can edit exiting content</p>
+    </div>
+    <div *ngSwitchCase="'viewer'">
+        <h4>Viewer Panel</h4>
+        <p>welcome, Viewer! you can view cotent</p>
+    </div>
+    <div *ngSwitchDefault>
+        <h4>Unknown Role</h4>
+        <p>The specified user role is not recognized</p>
+    </div>
+</div>
+</div>
+
+app.component.html
+<ngswitch></ngswitch>
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng serve
+
+<!--Outer double quotes ("): These define the value of the *ngSwitchCase
+Inner single quotes ('admin'): These denote the string literal 'admin'
+-->

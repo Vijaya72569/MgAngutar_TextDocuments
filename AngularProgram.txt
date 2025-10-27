@@ -1,0 +1,175 @@
+Example1:Routing based program
+=============================================================================================================================
+go to visual studio code->file open folder->AngularP->select folder->
+go to terminal->new terminal->
+D:\AngularP> ng new WebApp
+Would you like to add Angular routing? Yes
+? Which stylesheet format would you like to use? CSS-->enter
+
+go to terminal->new terminal->
+D:\AngularP> cd WebApp
+D:\AngularP> cd WebApp>ng serve
+
+check o/p in browser
+===========================================
+//create components 
+go to terminal->new terminal->
+ D:\AngularP\WebApp> ng g c header->enter
+ D:\AngularP\WebApp> ng g c about->enter
+ D:\AngularP\WebApp> ng g c contact->enter
+ D:\AngularP\WebApp> ng g c login->enter
+=================================================
+
+app.routing.module.ts
+
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { HeaderComponent } from './header/header.component';
+import { AboutComponent } from './about/about.component';
+import { ContactComponent } from './contact/contact.component';
+import { LoginComponent } from './login/login.component';
+import { HomeComponent } from './home/home.component';
+const routes: Routes = [
+  {
+    path:"home", component:HomeComponent
+  },
+  {
+    path:"about", component:AboutComponent
+  },
+  {
+    path:"contact",component:ContactComponent
+  },
+  {
+    path:"login",component:LoginComponent
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+============================================================================================================
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { RouterModule,Routes } from '@angular/router';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { HeaderComponent } from './header/header.component';
+import { HomeComponent } from './home/home.component';
+import { AboutComponent } from './about/about.component';
+import { ContactComponent } from './contact/contact.component';
+import { LoginComponent } from './login/login.component';
+import { FormsModule } from '@angular/forms';
+const routes: Routes = [
+  {
+    path:"home", component:HomeComponent
+  },
+  {
+    path:"about", component:AboutComponent
+  },
+  {
+    path:"contact",component:ContactComponent
+  },
+  {
+    path:"login",component:LoginComponent
+  }
+];
+@NgModule({
+  declarations: [
+    AppComponent,
+    HeaderComponent,
+    HomeComponent,
+    AboutComponent,
+    ContactComponent,
+    LoginComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    RouterModule.forRoot(routes),
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+======================================================
+header.component.html
+
+<p>header component</p>
+<a routerLink ="home">Home</a> &nbsp;
+<a routerLink ="about">About</a> &nbsp;
+<a routerLink ="contact">Contact</a> &nbsp;
+<a routerLink ="login">Login</a>
+
+app.component.html
+
+<div>
+  <app-header></app-header>
+</div>
+<div>
+  <router-outlet></router-outlet>
+</div>
+==========================================================
+login.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent implements OnInit {
+ uname:string="";
+ pwd:string="";
+ msg:string="";
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+   login(){
+    if(this.uname=="vijaya"&&this.pwd=="v1234"){
+      this.msg="login succuss";
+      alert("login success");
+    }
+    else{
+      this.msg="login fail";
+    }
+
+  }
+    
+  }
+
+==================================================================
+
+login.component.html
+
+<p>login Page</p>
+<div>
+    <label>Username</label><br>
+    <input type="text" [(ngModel)]="uname" placeholder="Username"><br>
+    <label>Password</label><br>
+    <input type="password" [(ngModel)]="pwd" placeholder="password"><br>
+    <input type="submit" value="submit" (click)="login()">
+    <p>
+        {{msg}}
+    </p>
+</div>
+
+save all
+================================================================
+go to terminal->new terminal
+D:\AngularP>cd WebApp
+D:\AngularP\WebApp>ng serve
+
+
+
+
+
+

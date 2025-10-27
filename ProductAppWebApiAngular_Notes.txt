@@ -1,0 +1,677 @@
+open visual studio 2022->
+create new project->asp.net webapplication(model-view-controller)->next->
+project name:ProductApplication
+next->.dot net core 8.0->create
+appsettings.json
+
+  "ConnectionStrings": {
+    "getcon": "server=localhost;database=mydb;Integrated Security=SSPI;Encrypt=True;TrustServerCertificate=True;"
+  }
+
+go to tools->Nuget Package Manager->Manage Nuget Package for->select->All(package source1->https://api.nuget.org/v3/index.json
+package source2->https://package.nuget.org/api/v2)
+Browse->Microsoft.Data.SqlClient->select project->version->5.1.0->install->IAccept->ok
+
+right click on Model->add-> class->name:Product->add
+
+namespace ProductApplication.Models
+{
+    public class Product
+    {
+        public int id {  get; set; }
+        public string? Name { get; set; }
+        public string? Brand { get; set; }
+        public decimal Price { get; set; }
+    }
+}
+
+right click on Model->add-> class->name:ProductRepository->add
+
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace ProductApplication.Models
+{
+    public class ProductRepository
+    {
+        string constring;
+        public ProductRepository(IConfiguration configuration)
+        {
+            // Use the null-forgiving operator (!) if you’re sure it's never null:
+            //  or
+            // constring = configuration.GetConnectionString("getcon") 
+            // ?? throw new ArgumentNullException(nameof(configuration), "Connection string cannot be null.");
+
+            constring = configuration.GetConnectionString("getcon")!;
+        }
+        public void AddProduct ( Product obj)
+        {
+            SqlConnection con=new SqlConnection(constring);
+            SqlCommand cmd = new SqlCommand("sp_insert", con);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@id", obj.id);
+            cmd.Parameters.AddWithValue("@name", obj.Name);
+            cmd.Parameters.AddWithValue("@brand", obj.Brand);
+            cmd.Parameters.AddWithValue("@price", obj.Price);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            con.Close();
+
+        }
+        public void Update(Product obj) 
+        {
+            SqlConnection con = new SqlConnection(constring);
+            SqlCommand cmd = new SqlCommand("sp_Edit", con);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@id", obj.id);
+            cmd.Parameters.AddWithValue("@name", obj.Name);
+            cmd.Parameters.AddWithValue("@brand", obj.Brand);
+            cmd.Parameters.AddWithValue("@price", obj.Price);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            con.Close();
+
+        }
+        public void Delete(int id) 
+        {
+            SqlConnection con = new SqlConnection(constring);
+            SqlCommand cmd = new SqlCommand("sp_remove", con);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("id", id);
+            con.Open();
+            cmd.ExecuteNonQuery();
+            con.Close();
+
+        }
+        public List<Product> GetProducts()
+        {
+        List<Product> products = new List<Product>();
+            SqlConnection con = new SqlConnection(constring);
+            SqlCommand cmd = new SqlCommand("sp_view", con);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            SqlDataAdapter da=new SqlDataAdapter(cmd);
+            DataTable dt=new DataTable();
+            con.Open();
+            da.Fill(dt);
+            con.Close();
+            foreach (DataRow dr in dt.Rows) {
+                products.Add(new Product()
+                {
+                id=Convert.ToInt32(dr["id"]),
+                Name=Convert.ToString(dr["name"]),
+                Brand = Convert.ToString(dr["brand"]),
+                Price = Convert.ToDecimal(dr["price"])
+                });
+            
+            }
+            return products;
+
+        }
+    }
+}
+==============================================================
+right click on controller add controller ->api->api controller empty->name:ProductController->add
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using ProductApplication.Models;
+
+namespace ProductApplication.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductsController : ControllerBase
+    {
+        ProductRepository productsRepository;
+        public ProductsController(ProductRepository productsRepository)
+        {
+            this.productsRepository = productsRepository;
+        }
+        [HttpGet]
+        public ActionResult<IEnumerable<Product>> Get()
+        {
+            var products=productsRepository.GetProducts();
+            return Ok(products);
+        }
+        [HttpPost]
+        public void Post([FromBody] Product product)
+        {
+            productsRepository.AddProduct(product);
+        }
+        [HttpPut]
+        public void Put([FromBody] Product product)
+        { 
+         productsRepository.Update(product);
+        }
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+         productsRepository.Delete(id);
+        }
+    }
+}
+
+program.ts
+
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builders =>
+    {
+        builders.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+    });
+});
+builder.Services.AddSingleton<ProductRepository>();
+
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+app.UseCors("AllowAllOrigins");
+
+run application
+https://localhost:44371/api/Products
+data in json format show
+
+open visual studio code->open folder->AngularP->ng new ProductApp->enter->css->enter
+open ProductApp->
+right click on src->create file name:product.ts->enter
+
+export interface product{
+    id:number;
+    name:string;
+    brand:string;
+    price:any;
+}
+
+right click on src->create file name:products.ts->enter
+
+export class products{
+    public id:any[]=[];
+    public name:any[]=[];
+    public brand:any[]=[];
+    public price:any[]=[];
+}
+
+AngularP/ProductApp/ng new g s product
+
+2files are created->product.service.ts and product.service.spec.ts
+In product.service.ts
+
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { product } from './product';
+import { products } from './products';
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductService {
+private apiUrl='https://localhost:44371/api/Products';
+  constructor(private http:HttpClient) { }
+  addProduct(p:product):Observable<product>{
+    return this.http.post<product>(this.apiUrl,p);
+  }
+  EditProduct(p:product):Observable<product>{
+    return this.http.put<product>(this.apiUrl,p);
+  }
+  DeleteProduct(id:number):Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+  GetData():Observable<products[]>{
+    return this.http.get<products[]>(this.apiUrl);
+  }
+}
+
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import {HttpClientModule} from '@angular/common/http';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { FormsModule,ReactiveFormsModule } from '@angular/forms';
+
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+appcomponent.ts
+
+import { Component } from '@angular/core';
+import { ProductService } from './product.service';
+import { product } from './product';
+import { products } from './products';
+import { FormControl,FormGroup } from '@angular/forms';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'ProductApp';
+  productall:products[]=[];
+  constructor(private s:ProductService){}
+    regForm=new FormGroup({
+      id:new FormControl(),
+      name:new FormControl(),
+      brand:new FormControl(),
+      price:new FormControl()
+    })
+    Save():void{
+      const formdata=this.regForm.value;
+      this.s.addProduct(formdata).subscribe(s=>
+      {console.log("Record Saved")}
+      )
+    }
+    Update():void{
+      const formdata=this.regForm.value;
+      this.s.EditProduct(formdata).subscribe(s=>
+      {console.log("Record Updated")}
+      )
+    }
+    Delete():void{
+      const formdata=this.regForm.value;
+      if(formdata.id){
+        this.s.DeleteProduct(formdata.id).subscribe(()=>
+        {alert("Record Deleted?")})
+      }
+    
+    else{
+      alert("Invalid ID");
+    }
+  }
+  ngOnInit():void{
+    this.s.GetData().subscribe(data=>
+    {
+      this.productall=data;
+    }
+    )
+  }
+
+  }
+
+app.component.html
+
+<div>
+  <h2>Product Form</h2>
+  <form [formGroup]="regForm">
+    <table>
+      <tr>
+        <td>ProductId</td>
+        <td> 
+          <input type="text" formControlName="id">
+        </td>
+      </tr>
+      <tr>
+        <td>Product Name</td>
+        <td> 
+          <input type="text" formControlName="name">
+        </td>
+      </tr>
+      <tr>
+        <td>Product Brand</td>
+        <td> 
+          <input type="text" formControlName="brand">
+        </td>
+      </tr>
+      <tr>
+        <td>Product Price</td>
+        <td> 
+          <input type="text" formControlName="price">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <button type="submit" (click)="Save()">Save</button>
+        </td>
+        <td>
+          <button type="submit" (click)="Update()">Update</button>
+        </td>
+        <td>
+          <button type="submit" (click)=" Delete()">Delete</button>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+<h4>Products</h4>
+<table border="1">
+  <tr>
+    <th>ProductId</th>
+    <th>ProductName</th>
+    <th>ProductBrand</th>
+    <th>ProductPrice</th>
+  </tr>
+  <tr *ngFor="let prod of productall">
+    <td>{{prod.id}}</td>
+    <td>{{prod.name}}</td>
+    <td>{{prod.brand}}</td>
+    <td>{{prod.price}}</td>
+  </tr>
+</table>
+go to terminal->new terminal->in command promt->Angular/cd ProductApp->enter
+                                                Angular/cd ProductApp/ng serve(when you run the Angular application WepApi it must be running mode)
+
+
+
+Angular Directives
+
+realtime example using ngif in angular
+
+go to visual studio code->open floder->AngularP->go to terminal->new terminal->command prompt->
+AngularP/ng new AngDirectives->enter->css->enter
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngiflogin->enter
+
+ ngiflogin.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngiflogin',
+  templateUrl: './ngiflogin.component.html',
+  styleUrls: ['./ngiflogin.component.css']
+})
+export class NgifloginComponent implements OnInit {
+islogin=false;
+togglelogin(){
+  this.islogin=!this.islogin;
+}
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+
+
+ app.component.html
+
+<app-nglogin></nglogin>
+
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngfor->enter
+ 
+ngfor.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngfor',
+  templateUrl: './ngfor.component.html',
+  styleUrls: ['./ngfor.component.css']
+})
+export class NgforComponent implements OnInit {
+countries:string[]=['India','Usa','Uk','France'];
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+ngfor.component.html
+
+<p>ngfor works!</p>
+<div style="text-align:left;">
+    <h1>Countries</h1>
+    <ul>
+        <li *ngFor="let country of countries">
+            {{country}}
+        </li>
+    </ul>
+
+</div>
+
+app.component.html
+
+<app-ngfor></app-ngfor>
+
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngswitch->enter
+
+
+ngswitch.component.ts
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngswitch',
+  templateUrl: './ngswitch.component.html',
+  styleUrls: ['./ngswitch.component.css']
+})
+export class NgswitchComponent implements OnInit {
+userRole:string=' ';
+setuserRole(role:string){
+this.userRole=role;
+}
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}
+
+ngswitch.component.html
+
+<p>ngswitch works!</p>
+<div style="text-align: left;">
+    <h4>User role Dashboard</h4>
+    <div>
+    <button type="submit" (click)="setuserRole('admin')">Admin</button>&nbsp;
+    <button type="submit" (click)="setuserRole('editor')">Editor</button>&nbsp;    
+    <button type="submit" (click)="setuserRole('viewer')">Viewer</button>
+</div>
+<div [ngSwitch]="userRole">
+    <div *ngSwitchCase="'admin'">
+        <h4>Admin Panel</h4>
+        <p>welcome, Admin! you have full access for all features</p>
+    </div>
+    <div *ngSwitchCase="'editor'">
+        <h4>Edit Panel</h4>
+        <p>welcome, Editor! you can edit exiting content</p>
+    </div>
+    <div *ngSwitchCase="'viewer'">
+        <h4>Viewer Panel</h4>
+        <p>welcome, Viewer! you can view cotent</p>
+    </div>
+    <div *ngSwitchDefault>
+        <h4>Unknown Role</h4>
+        <p>The specified user role is not recognized</p>
+    </div>
+</div>
+</div>
+
+app.component.html
+<ngswitch></ngswitch>
+
+<!--Outer double quotes ("): These define the value of the *ngSwitchCase
+Inner single quotes ('admin'): These denote the string literal 'admin'
+-->
+==================================================================
+
+
+
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model MvcCoreCurd2.Models.EmpModel
+<form asp-controller="Employee" asp-action="Index" method="post">
+    <table>
+        <tr>
+            <td><label asp-for="Eid"></label></td>
+            <td><input asp-for="Eid" readonly="@(Model.Eid>0)" placeholder="New Id" /></td>
+            <td><span class="text-danger" asp-validation-for="Eid"></span></td>
+        </tr>
+        <tr>
+            <td><label asp-for="Ename"></label></td>
+            <td><input asp-for="Ename" /></td>
+            <td><span class="text-danger" asp-validation-for="Ename"></span> </td>
+        </tr>
+        <tr>
+            <td><label asp-for="Salary"></label></td>
+            <td><input asp-for="Salary" /></td>
+            <td><span class="text-danger" asp-validation-for="Salary"></span> </td>
+        </tr>
+
+   
+        <tr>
+            <td><label asp-for="Gender"></label></td>
+            <td>
+                @* <input type="radio" name="Gender" value="Male" /> Male
+                <input type="radio" name="Gender" value="Female" /> Female
+                <input type="radio" name="Gender" value="Other" /> Other *@
+                <input type="radio" asp-for="Gender" value="Male" /> Male
+                <input type="radio" asp-for="Gender" value="Female" /> Female
+                <input type="radio" asp-for="Gender" value="Other" /> Other
+
+            </td>
+            <td><span class="text-danger" asp-validation-for="Gender"></span> </td>
+        </tr>
+        <tr>
+            <td>
+     
+        <tr>
+            <td><label asp-for="City"></label></td>
+            <td>
+                <select asp-for="City">
+                    <option value="">Select City</option>
+                    <option value="Amaravathi" selected="@(Model.City == "Amaravathi")"> Amaravathi</option>
+                    <option value="Vizag" selected="@(Model.City == "Vizag")">Vizag</option>
+                    <option value="Hydrabad" selected="@(Model.City == "Hydrabad")">Hydrabad</option>
+                    <option value="Chennai" selected="@(Model.City == "Chennai")">Chennai</option>
+                </select>
+                @* <select name="City">
+                    <option value="">Select City</option>
+                    <option value="New York">New York</option>
+                    <option value="Los Angeles">Los Angeles</option>
+                    <option value="Chicago">Chicago</option>
+                    <option value="Houston">Houston</option>
+                </select> *@
+            </td>
+            <td><span class="text-danger" asp-validation-for="City"></span> </td>
+        </tr>
+        <tr>
+            <td><label asp-for="Hobbies"></label></td>
+            <td>
+                <input type="checkbox" name="Hobbies" value="Reading" @(Model.Hobbies?.Contains("Reading") == true ? "checked" : "") /> Reading
+                <input type="checkbox" name="Hobbies" value="Traveling" @(Model.Hobbies?.Contains("Traveling") == true ? "checked" : "") /> Traveling
+                <input type="checkbox" name="Hobbies" value="Sports" @(Model.Hobbies?.Contains("Sports") == true ? "checked" : "") /> Sports
+                <input type="checkbox" name="Hobbies" value="Music" @(Model.Hobbies?.Contains("Music") == true ? "checked" : "") /> Music
+            </td>
+        </tr>
+
+        <tr>
+            <td><input type="submit" value="Save" name="str" /></td>
+            <td><input type="submit" value="Update" name="str" /></td>
+        </tr>
+    </table>
+</form>
+
+<table border="1">
+    <tr>
+        <th> Eid</th>
+        <th> Ename</th>
+        <th> Salary</th>
+        <th> Gender</th>
+        <th> City</th>
+        <th> Hobbies</th>
+        <th> Actions</th>
+    </tr>
+    @foreach (var item in new MvcCoreCurd2.Models.EmpRepository().GetAllEmps())
+    {
+        <tr>
+            <td>@item.Eid</td>
+            <td>@item.Ename</td>
+            <td>@item.Salary</td>
+            <td>@item.Gender</td>
+            <td>@item.City</td>
+            <td>@item.Hobbies</td>
+            <td>@Html.ActionLink("Edit", "Index", new { id = item.Eid })</td>
+            <td>@Html.ActionLink("Delete", "Delete", new { id = item.Eid },new { onclick="return confirm('Are you sure delete?');"})</td>
+        </tr>
+    }
+</table>
+
+================================================================================
+
+✅ Comparison: Manual MVC API (like your code) vs .NET Core Web API Template
+
+Asp.Net(Model-View-Controller)-Template vs .NET Core Web API Template
+
+| Feature / Approach   | Your Method (Manual ASP.NET Core MVC + SqlClient + SPs) | Template Web API (Minimal API or EF Core)     |
+| -------------------- | ------------------------------------------------------- | --------------------------------------------- |
+| **Template Used**    | ASP.NET Core Web App (MVC)                              | ASP.NET Core Web API                          |
+| **Architecture**     | MVC with controller, model, repository manually built   | Pre-wired Minimal API or Controller + EF      |
+| **Data Access**      | Manual using `SqlConnection`, `SqlCommand`, SPs         | Uses `DbContext`, `LINQ`, migrations          |
+| **Performance**      | ✅ Faster (no ORM overhead)                              | ⚠️ Slightly slower due to EF Core abstraction |
+| **Complex Queries**  | ✅ Easy with Stored Procedures                           | ⚠️ Needs raw SQL or functions with EF         |
+| **Learning Curve**   | Slightly higher (you manage everything)                 | Easier for beginners                          |
+| **Control over SQL** | ✅ Full control via stored procedures                    | Less direct unless using raw SQL              |
+| **Best For**         | Enterprise-style DB-heavy apps, ADO.NET usage           | Quick APIs, prototypes, full .NET stack apps  |
+| **Swagger/OpenAPI**  | You need to enable manually                             | Comes pre-enabled                             |
+
+✅ Your Method is Good When:
+You want full control over SQL operations (e.g., for performance or legacy DBs)
+
+You're using stored procedures for logic or security
+
+You're not using EF Core (by choice or by constraint)
+
+You want to mirror how real companies use SQL Server in enterprise systems
+
+⚠️ Template Web API is Better When:
+You want faster development using EF and scaffolding
+
+You don’t want to write boilerplate ADO.NET code
+
+You're building a new greenfield project from scratch
+
+🔍 Summary
+| If you're comfortable with SQL + SPs and want full control → ✅ Your approach is solid and enterprise-ready.
+| If you want faster development, cleaner code, and ORM benefits → 💡 Use Minimal API or EF Core-based Web API.
+
+💡 Pro Tip: Combine Best of Both
+You can still use the .NET Core Web API template and manually call stored procedures using Microsoft.Data.SqlClient.
+
+That way, you:
+
+Benefit from Swagger, dependency injection, project structure
+
+Still use stored procs and ADO.NET
+
+✅ Recommendation for You:
+Stick with your current MVC-style Web API using stored procedures, because:
+
+You're already experienced with it
+
+It gives better real-world control
+
+It integrates well with Angular
+
+
+

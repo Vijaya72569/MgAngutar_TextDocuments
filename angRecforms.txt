@@ -1,0 +1,84 @@
+example program of Reactiveforms
+=====================================================
+go to visual studio code->file open folder->AngularP->select folder->
+go to terminal->new terminal->
+D:\AngularP> ng new recforms
+Would you like to add Angular routing? Yes
+? Which stylesheet format would you like to use? CSS-->enter
+
+go to terminal->new terminal->
+D:\AngularP> cd recforms
+D:\AngularP> cd recforms>ng serve
+
+check o/p in browser
+=============================================================
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { ReactiveFormsModule } from '@angular/forms';
+@NgModule({
+  declarations: [
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    ReactiveFormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+================================================================
+app.component.ts
+
+import { Component,OnInit } from '@angular/core';
+import { FormGroup,FormControl,Validator, Validators } from '@angular/forms';
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  loginForm!:FormGroup
+  ngOnInit(): void {
+    this.loginForm=new FormGroup({
+      uname: new FormControl('',[Validators.required,Validators.minLength(8)]),
+      pwd:new FormControl('',[Validators.required,Validators.minLength(8)])
+    })
+  }
+  title = 'recforms';
+  login(){
+    console.log(this.loginForm.value);
+  }
+}
+===========================================================================
+app.component.html
+
+<form [formGroup]="loginForm" (ngSubmit)="login()">
+  <label>Username:</label><br>
+  <input type="text" formControlName="uname"><br>
+  <div *ngIf="loginForm.get('uname')?.invalid && (loginForm.get('uname')?.dirty||loginForm.get('uname')?.touched)" style="color:crimson;">
+    <div *ngIf="loginForm.get('uname')?.errors?.['required']">Username required</div>
+  </div>
+
+  <label>Password:</label><br>
+  <input type="password" formControlName="pwd"><br>
+  <div *ngIf="loginForm.get('pwd')?.invalid && (loginForm.get('pwd')?.dirty||loginForm.get('pwd')?.touched)" style="color:crimson;">
+    <div *ngIf="loginForm.get('pwd')?.errors?.['required']">Password required</div>
+  </div>
+<button type="submit" [disabled]="loginForm.invalid">Submit</button>
+</form>
+====================================================================
+
+go to terminal->new terminal->command prompt
+D:\AngularP> cd recforms
+D:\AngularP> cd recforms>ng serve
+
+//power shell
+json-server --watch db.json

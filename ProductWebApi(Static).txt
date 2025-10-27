@@ -1,0 +1,458 @@
+Create WebApi in .NetCore8(LTM) (Statically)
+===================================================================================
+Open visual studio 2022->
+Create new project->ASP.NET Core Web API->next->
+Project name:ProductWebApi
+Next->.dot net core 8.0->
+Location: Choose folder path->Click Next
+
+Authentication Type: Choose "None"
+
+Check ✅ “Use controllers (uncheck minimal APIs)” — if you want controller-based API (like you’re building)
+
+Click Create
+==================================================================================
+Add a Models Folder:
+Right-click on the project name ProductWebApi
+
+Select Add → New Folder
+Name it Models
+================================================================================
+Right-click on the new Models folder → Add → Class->Name:Product.cs
+ Product.cs
+========================================================================
+namespace ProductWebApi.Models
+{
+    public class Product
+    {
+        public int PId { get; set; }
+        public string? Name { get; set; }
+        public decimal Price { get; set; }
+    }
+}
+==========================================================================
+Right-click on the new Models folder → Add → Class->Name:IProductService.cs
+
+IProductService.cs
+
+namespace ProductWebApi.Models
+{
+    public interface IProductService
+    {
+        List<Product> GetAll();
+        Product GetById(int id);
+        void Add(Product product);
+        void Update(Product product);
+        void Delete(int id);
+    }
+}
+==========================================================================================
+Right-click on the new Models folder → Add → Class->Name:ProductService.cs
+ProductService.cs
+
+using ProductWebApi.Models;
+namespace ProductWebApi.Models
+{
+    public class ProductService : IProductService
+    {
+        private readonly List<Product> _products = new()
+       {
+           new Product {PId=1,Name="Laptop",Price=40000.99m},
+            new Product{PId=2,Name="Mobile",Price=30000.99m}
+
+       };
+
+        public List<Product> GetAll() => _products;
+
+        public Product? GetById(int id) => _products.FirstOrDefault(m => m.PId == id);
+        public void Add(Product product)
+        {
+            product.PId = _products.Max(m => m.PId) + 1;
+            _products.Add(product);
+       }
+        public void Update(Product product)
+        {
+            var pro=GetById(product.PId);
+            if(pro != null)
+            {
+                pro.Name = product.Name;
+                pro.Price = product.Price;
+            }
+        }
+        public void Delete(int id)
+        {
+            var pro=GetById(id);
+            if(pro != null)
+                _products.Remove(pro);
+        }
+       
+    }
+}
+===============================================================================================
+Right click on controller->add controller->API=>API controller empty->name:ProductController.cs->enter
+ProductController.cs
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using ProductWebApi.Models;
+
+namespace ProductWebApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IProductService _productService;
+    public   ProductController(IProductService productService)
+        {
+         _productService = productService;
+        }
+        [HttpGet]
+        public List<Product> Get() => _productService.GetAll();
+
+        [HttpGet("{id}")]
+        public ActionResult <Product> Get(int id)
+        {
+            var product= _productService.GetById(id);
+            if (product == null)
+           
+                return NotFound();
+
+            return product;
+        }
+        [HttpPost]
+        public IActionResult Post(Product product)
+        {
+            _productService.Add(product);
+            return Ok(product); 
+           
+        }
+        [HttpPut("{id}")]
+        public IActionResult Put(Product product, int id)
+        {
+            if (id != product.PId) 
+            {
+                return BadRequest();
+            }
+            _productService.Update(product);
+         
+            return Ok(product);
+
+        }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            _productService.Delete(id);
+            
+            return Ok(id);
+
+        }
+
+    }
+}
+=================================================================================================
+Program.cs
+
+//Add this line code
+
+builder.Services.AddSingleton<IProductService, ProductService>();
+
+Run Application
+===============================================================================================
+https://localhost:44363/swagger/index.html
+
+=>View all your API endpoints (GET, POST,PUT,DELETE)
+
+Click on the endpoint
+
+Click the "Try it out" button
+
+Then click "Execute"
+
+You will see the JSON result below
+
+=================================================================================================
+june23/2025
+dynamically create WebApi
+
+===============================================================
+
+🔁 Changes Overview
+Static Version                              	Dynamic Version (New)
+List<Product> as data source     	SQL Server table Product
+No database	                                  Use ADO.NET (SqlConnection, SqlCommand)
+ProductService with in-memory list	ProductRepository with real DB queries
+Singleton Service	                                  Transient/Scoped Repository using DI
+=============================================================================
+*.Sample SQL Table
+
+CREATE TABLE Product (
+    PId INT PRIMARY KEY IDENTITY,
+    Name NVARCHAR(100),
+    Price DECIMAL(10,2)
+);
+=============================================================================================
+Open visual studio 2022->
+Create new project->ASP.NET Core Web API->next->
+Project name:ProductWebApi
+Next->.dot net core 8.0->
+Location: Choose folder path->Click Next
+
+Authentication Type: Choose "None"
+
+Check ✅ “Use controllers (uncheck minimal APIs)” — if you want controller-based API (like you’re building)
+
+Click Create
+==================================================================================
+Add a Models Folder:
+Right-click on the project name ProductWebApi
+
+===============================================================================================
+ 1. Product.cs (Unchanged)
+
+namespace ProductWebApi.Models
+{
+    public class Product
+    {
+        public int PId { get; set; }
+        public string? Name { get; set; }
+        public decimal Price { get; set; }
+    }
+}
+========================================================================================
+2. IProductRepository.cs
+
+using System.Collections.Generic;
+
+namespace ProductWebApi.Models
+{
+    public interface IProductRepository
+    {
+        List<Product> GetAll();
+        Product? GetById(int id);
+        void Add(Product product);
+        void Update(Product product);
+        void Delete(int id);
+    }
+}
+============================================================================================
+ 3. ProductRepository.cs
+
+using Microsoft.Data.SqlClient;
+using System.Data;
+
+namespace ProductWebApi.Models
+{
+    public class ProductRepository : IProductRepository
+    {
+        private readonly IConfiguration _config;
+        private readonly string _connectionString;
+
+        public ProductRepository(IConfiguration config)
+        {
+            _config = config;
+            _connectionString = _config.GetConnectionString("getcon")!;
+        }
+
+        public List<Product> GetAll()
+        {
+            List<Product> products = new();
+            using SqlConnection con = new(_connectionString);
+            using SqlCommand cmd = new("SELECT * FROM Product", con);
+            con.Open();
+            using SqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                products.Add(new Product
+                {
+                    PId = (int)reader["PId"],
+                    Name = reader["Name"].ToString(),
+                    Price = (decimal)reader["Price"]
+                });
+            }
+            return products;
+        }
+
+        public Product? GetById(int id)
+        {
+            using SqlConnection con = new(_connectionString);
+            using SqlCommand cmd = new("SELECT * FROM Product WHERE PId = @id", con);
+            cmd.Parameters.AddWithValue("@id", id);
+            con.Open();
+            using SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return new Product
+                {
+                    PId = (int)reader["PId"],
+                    Name = reader["Name"].ToString(),
+                    Price = (decimal)reader["Price"]
+                };
+            }
+            return null;
+        }
+
+        public void Add(Product product)
+        {
+            using SqlConnection con = new(_connectionString);
+            using SqlCommand cmd = new("INSERT INTO Product(Name, Price) VALUES (@name, @price)", con);
+            cmd.Parameters.AddWithValue("@name", product.Name);
+            cmd.Parameters.AddWithValue("@price", product.Price);
+            con.Open();
+            cmd.ExecuteNonQuery();
+        }
+
+        public void Update(Product product)
+        {
+            using SqlConnection con = new(_connectionString);
+            using SqlCommand cmd = new("UPDATE Product SET Name = @name, Price = @price WHERE PId = @id", con);
+            cmd.Parameters.AddWithValue("@name", product.Name);
+            cmd.Parameters.AddWithValue("@price", product.Price);
+            cmd.Parameters.AddWithValue("@id", product.PId);
+            con.Open();
+            cmd.ExecuteNonQuery();
+        }
+
+        public void Delete(int id)
+        {
+            using SqlConnection con = new(_connectionString);
+            using SqlCommand cmd = new("DELETE FROM Product WHERE PId = @id", con);
+            cmd.Parameters.AddWithValue("@id", id);
+            con.Open();
+            cmd.ExecuteNonQuery();
+        }
+    }
+}
+===============================================================================================
+Right click on controller->add controller->API=>API controller empty->name:ProductController.cs->enter
+=========================================================================================
+
+ 4. ProductController.cs (Updated)
+
+using Microsoft.AspNetCore.Mvc;
+using ProductWebApi.Models;
+
+namespace ProductWebApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IProductRepository _repo;
+
+        public ProductController(IProductRepository repo)
+        {
+            _repo = repo;
+        }
+
+        [HttpGet]
+        public IActionResult Get() => Ok(_repo.GetAll());
+
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
+        {
+            var product = _repo.GetById(id);
+            if (product == null) 
+               return NotFound();
+            return Ok(product);
+        }
+
+        [HttpPost]
+        public IActionResult Post(Product product)
+        {
+            _repo.Add(product);
+            return Ok(product);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, Product product)
+        {
+            if (id != product.PId)
+               return BadRequest();
+            _repo.Update(product);
+            return Ok(product);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            _repo.Delete(id);
+            return Ok(id);
+        }
+    }
+}
+======================================================================
+5. Program.cs (Add DI)
+
+// Add SQL Repository
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+6. appsettings.json
+
+{
+  "ConnectionStrings": {
+    "getcon": "Server=localhost;Database=mydb;Integrated Security=SSPI;Encrypt=True;TrustServerCertificate=True;"
+  }
+
+=======================================================================
+7. Sample SQL Table
+
+CREATE TABLE Product (
+    PId INT PRIMARY KEY IDENTITY,
+    Name NVARCHAR(100),
+    Price DECIMAL(10,2)
+);
+=================================================
+
+ Run the App
+
+Go to:
+https://localhost:44363/swagger/index.html
+
+Try GET, POST, PUT, DELETE dynamically connected to your SQL Server.
+=====================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+🎯 Summary
+
+| Static              | Dynamic                |
+| ------------------- | ---------------------- |
+| In-memory list      | SQL Server database    |
+| `ProductService.cs` | `ProductRepository.cs` |
+| Fake data           | Real-time CRUD         |
+
+
+
+
+

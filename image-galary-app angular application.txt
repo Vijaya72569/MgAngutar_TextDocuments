@@ -1,0 +1,230 @@
+image-galary-app
+
+app.module.ts
+======================================================================================================
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { ImagelistComponent } from './imagelist/imagelist.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    ImagelistComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+==================================================================================
+db.json
+{
+    "images":[
+ 
+ {"id":10,
+"url":"assets/image1.jpg"
+},
+ 
+ {"id":11,
+"url":"assets/image2.jpg"
+},
+ {"id":12,
+"url":"assets/image3.jpg"
+}  ,
+ {"id":13,
+"url":"assets/image4.jpg"
+},
+ 
+ {"id":14,
+"url":"assets/image5.jpg"
+},
+ {"id":15,
+"url":"assets/image6.jpg"
+},
+ {"id":16,
+"url":"assets/image7.jpg"
+},
+ 
+ {"id":17,
+"url":"assets/image8.jpg"
+},
+ {"id":18,
+"url":"assets/image9.jpg"
+},
+{"id":19,
+"url":"assets/image10.jpg"
+} ,
+{"id":20,
+"url":"assets/image11.jpg"
+} ,
+      
+{"id":21,
+"url":"assets/image12.jpg"
+} ,
+{"id":22,
+"url":"assets/image13.jpg"
+} ,
+{"id":23,
+"url":"assets/image14.jpg"
+} ,
+{"id":24,
+"url":"assets/image15.jpg"
+},
+
+{"id":25,
+"url":"assets/image16.jpg"
+},
+   
+
+{"id":26,
+"url":"assets/image17.jpg"
+},
+   
+
+{"id":27,
+"url":"assets/image18.jpg"
+},
+   
+
+{"id":28,
+"url":"assets/image19.jpg"
+},
+   
+
+{"id":29,
+"url":"assets/image20.jpg"
+},
+   
+{"id":30,
+"url":"assets/image11.jpg"
+},
+   
+
+{"id":31,
+"url":"assets/image12.jpg"
+},
+   
+
+{"id":32,
+"url":"assets/image13.jpg"
+},
+   
+{"id":33,
+"url":"assets/image14.jpg"
+}
+  
+],
+
+
+"images_backup":[
+ {"id":1,
+ "url":"https://placehold.co/150x150/00FF00/000000?text=Green" },
+ { "id": 2, 
+ "url": "https://placehold.co/150x150/0000FF/FFFFFF?text=Blue" },
+ { "id": 3, 
+ "url": "https://placehold.co/150x150/00FF00/000000?text=Green" },
+ {"id":4,
+        "url":"https://placehold.co/150x150/00FF00/000000?text=Green" },
+         { "id": 5, "url": "https://placehold.co/150x150/0000FF/FFFFFF?text=Blue" },
+    { "id": 6, "url": "https://placehold.co/150x150/00FF00/000000?text=Green" } ,
+      {"id":7,
+"url":"assets/jimg2.jpg"
+},
+ 
+ {"id":8,
+"url":"assets/jimg3.jpg"
+},
+ {"id":9,
+"url":"assets/jimg4.jpg"
+} 
+
+    
+]
+
+
+}
+
+======================================================================
+image.service.ts
+
+import { Injectable } from '@angular/core';
+import{HttpClient} from '@angular/common/http';
+import { Observable } from 'rxjs';
+export interface Image{
+        "id":number;
+        "url":string;
+}
+ @Injectable({
+  providedIn: 'root'
+})
+
+export class ImageService {
+
+  private apiurl="http://localhost:3000/images";
+  constructor(private http:HttpClient) { }
+  getimage():Observable<Image[]>{
+    return this.http.get<Image[]>(this.apiurl)
+  }
+
+  
+}
+=============================================================================================
+app.component.ts
+
+import { Component,OnInit } from '@angular/core';
+import { ImageService,Image } from './image.service';
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent  implements OnInit{
+  images:Image[]=[];
+  constructor(private imageservice:ImageService){}
+  ngOnInit(): void {
+   // throw new Error('Method not implemented.');
+   this.imageservice.getimage().subscribe(data=>this.images=data)
+  }
+
+  title = 'image-galary-app';
+}
+=====================================================================================================
+app.component.html
+<h2>image galary</h2>
+<app-imagelist [images]="images"></app-imagelist>
+==========================================================================================
+image.component.ts
+
+import { Component, Input } from '@angular/core';
+import { Image } from '../image.service';
+@Component({
+  selector: 'app-imagelist',
+  templateUrl: './imagelist.component.html',
+  styleUrls: ['./imagelist.component.css']
+})
+export class ImagelistComponent  {
+
+ 
+ @Input() images:Image[]=[];
+
+}
+==============================================================================
+image.component.html
+
+<p>imagelist works!</p>
+ <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div *ngFor="let image of images">
+        <img [src]="image.url" width="200" height="200">
+      </div>
+    </div>
+
+////
+<a asp-action="Delete" asp-route-id="@emp.Id" onclick="return confirm('Are you sure want to Delete?');)">Delete</a>
+

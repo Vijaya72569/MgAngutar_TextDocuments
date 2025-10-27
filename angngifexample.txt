@@ -1,0 +1,101 @@
+Example  for ngif
+
+go to visual studio code->open floder->AngularP->go to terminal->new terminal->command prompt->
+AngularP/ng new AngDirectives->enter->css->enter
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng g c ngiflogin->enter
+
+ngiflogin.component.ts
+
+
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-ngiflogin',
+  templateUrl: './ngiflogin.component.html',
+  styleUrls: ['./ngiflogin.component.css']
+})
+export class NgifloginComponent implements OnInit {
+  islogin = false;
+  username = '';
+  password = '';
+  errorMessage = '';
+
+  constructor() {}
+
+  ngOnInit(): void {}
+
+  togglelogin() {
+    if (!this.islogin) {
+      // Validate login credentials
+      if (this.username === 'admin' && this.password === '123') {
+        this.islogin = true;
+        this.errorMessage = '';
+      } else {
+        this.errorMessage = 'Invalid username or password';
+      }
+    } else {
+      this.islogin = false;
+      this.username = '';
+      this.password = '';
+      this.errorMessage = '';
+    }
+  }
+}
+
+app.nglogin.html
+
+
+<h2 *ngIf="!islogin">Login Page</h2>
+<div *ngIf="!islogin">
+  <label>Username:</label>
+  <input type="text" [(ngModel)]="username"><br><br>
+  <label>Password:</label>
+  <input type="password" [(ngModel)]="password"><br><br>
+  <button (click)="togglelogin()">Login</button>
+  <p style="color:red;" *ngIf="errorMessage">{{ errorMessage }}</p>
+</div>
+
+<div *ngIf="islogin">
+  <h2>Welcome {{ username }}!</h2>
+  <button (click)="togglelogin()">Logout</button>
+</div>
+
+app.module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { NgifloginComponent } from './ngiflogin/ngiflogin.component';
+import { NgforComponent } from './ngfor/ngfor.component';
+import { NgswitchComponent } from './ngswitch/ngswitch.component';
+import { HomeComponent } from './home/home.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    NgifloginComponent,
+    NgforComponent,
+    NgswitchComponent,
+    HomeComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+
+
+app.component.html
+
+<app-nglogin></nglogin>
+
+go to terminal->new termial->AngularP/cd AngDirectives->enter
+                             AngularP/cd AngDirectives/ng serve

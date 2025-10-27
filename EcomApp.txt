@@ -1,0 +1,403 @@
+angular E-Commerse Application
+step1:D:Angular>ng new ecomApp-> yes->yes
+step2:D:Angular>cd ecomApp
+      D:Angular>ecomApp>npm install bootstrap
+      D:Angular>ecomApp>ng g c header
+      D:Angular>ecomApp>ng g c product
+      D:Angular>ecomApp>ng g c cart
+      D:Angular>ecomApp>ng g c contact
+      D:Angular>ecomApp>ng g c notfound
+      D:Angular>ecomApp>ng g s product
+
+app.module.cs
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { ContentComponent } from './content/content.component';
+import { CortComponent } from './cort/cort.component';
+import { HeaderComponent } from './header/header.component';
+import { RouterModule, Routes } from '@angular/router';
+import { CantactComponent } from './cantact/cantact.component';
+import { NotfoundComponent } from './notfound/notfound.component';
+import { ProductComponent } from './product/product.component';
+
+const routes:Routes[
+  {
+    path:"cart",component:CortComponent
+  },
+  {
+    path:"products",component:ProductComponent
+  },
+  {
+    path:"contact",component:CantactComponent
+  },
+  
+  {
+    path:"**",component:NotfoundComponent
+  }
+]
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    ContentComponent,
+    CortComponent,
+    HeaderComponent,
+    CantactComponent,
+    NotfoundComponent,
+    ProductComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    RouterModule.forRoot(routes),
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+';';ppo0
+app.product.service.ts
+
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductService {
+  private selectedProduct = new BehaviorSubject<any>(null); // Observable for product data
+  selectedProduct$ = this.selectedProduct.asObservable(); // Expose as observable for subscribers
+  // Method to update selected product
+  setSelectedProduct(product: any) {
+    this.selectedProduct.next(product);
+ // constructor() { }
+}
+}
+
+
+header.component.html
+
+Header Section<br>
+<a routerLink="products">Products</a>
+<a routerLink="cart">Cart</a>
+
+<a routerLink="contact">contact</a>
+
+header.component.css
+
+
+a{
+    background-color: hwb(189 10% 8% / 0.945);
+    margin: 5px 5px 10px 10px;
+    padding: 2px 2px 10px 10px;
+    color:forestgreen;
+    border-radius: 5px;
+    
+
+}
+
+app.component.css
+
+.parent {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: auto 1fr auto;
+ 
+}
+
+.header {
+  grid-column: 1 / 4;
+  background-color:green;
+}
+
+.middlecol {
+  grid-column: 2 / 3;
+  background-color:crimson;
+}
+
+.rightsidebar {
+  grid-column: 3 / 4;
+
+  background-color:rgba(218, 228, 76, 0.63);
+}
+
+
+app.component.html
+
+<!--
+<body>
+    <div class="parent">
+    <div class="header"><app-header></app-header>
+      <router-outlet></router-outlet></div>-->
+  <!----<div class="search">Search</div>
+    
+    <div class="leftsidebar">Left Sidebar</div>-->
+    <!--
+    <div class="middlecol"><app-content></app-content> <router-outlet></router-outlet>
+    </div>
+    <div class="rightsidebar">Right Sidebar</div>
+    </div>
+</body>-->
+
+<!--modify 11/4/2025-->
+<!---
+<body>
+  <div class="parent">
+    <div class="header">
+      <app-header></app-header>
+   <--- <a routerLink="cart">Cart</a>
+      <a routerLink="contact">Contact</a>
+      <a routerLink="products">Products</a>-->
+    <!--
+    </div> 
+  
+  
+  
+    <div class="middlecol">
+      <-- Single router-outlet to display dynamic content-->
+      <!---
+      <app-product></app-product>
+    </div>
+
+    <div class="rightsidebar"><router-outlet></router-outlet>
+     </div>
+  </div>
+</body> -->
+
+<body>
+  <div class="parent">
+    
+    <!-- Fixed Header -->
+    <div class="header">
+      <app-header></app-header>
+     
+    </div>
+
+    <!-- Dynamic Middle Content based on routing -->
+    <div class="middlecol">
+      <app-product></app-product>
+    </div>
+
+   
+    <div class="rightsidebar">
+      <p>Selected Product</p>
+      
+    <router-outlet></router-outlet>
+    </div>
+
+  </div>
+</body>
+/*
+ app>assets> product images add then write code 
+*/
+product.component.ts
+
+
+import { Component } from '@angular/core';
+import { ProductService } from '../product.service';
+
+@Component({
+  selector: 'app-product',
+  templateUrl: './product.component.html',
+  styleUrls: ['./product.component.css']
+})
+export class ProductComponent {
+  products = [
+  
+    { id: 1, name: 'VredeVogel', price: 499, originalPrice: 2299, discount: '78%', img: '../../assets/jimg5.jpg' },
+    { id: 2, name: 'EthnicJunction', price: 389, originalPrice: 2396, discount: '84%', img: '../../assets/jimg3.jpg' },
+    { id: 3, name: 'Sidhidata', price: 699, originalPrice: 2999, discount: '77%', img: '../../assets/jimg4.jpg' },
+    { id: 4, name: 'Sun Fashion And Lifestyle', price: 659, originalPrice: 2599, discount: '75%', img: '../../assets/jimg7.jpg' },
+    { id: 5, name: 'Sidhida', price: 749, originalPrice: 2999, discount: '75%', img: '../../assets/jimg6.jpg' },
+    { id: 6, name: 'EthnicJunction', price: 759, originalPrice: 2499, discount: '70%', img: '../../assets/jimg10.jpg' },
+    { id: 7, name: 'SNISHET', price: 389, originalPrice: 2396, discount: '84%', img: '../../assets/jimg5.jpg' },
+    { id: 8, name: 'EthnicJunction', price: 358, originalPrice: 1996, discount: '82%', img: '../../assets/jimg9.jpg' },
+    { id: 9, name: 'Sidhidata', price: 699, originalPrice: 2999, discount: '77%', img: '../../assets/jimg4.jpg' },
+     
+  ];
+
+  constructor(private productService: ProductService) { }
+  selectProduct(product: any) {
+    this.productService.setSelectedProduct(product); // Update selected product in service
+  }
+
+ /* ngOnInit(): void {
+  }*/
+
+}
+
+product.component.css
+
+.Product-images{
+    display:flex;
+    justify-content:space-evenly;
+    align-items:center;
+    flex-wrap:wrap;
+    margin:5px;
+    padding: 5px;
+    border-radius: 5px;
+
+  }
+ 
+.off{
+  background-color: red;
+   color: aliceblue;
+ }
+
+product.component.html
+
+
+
+<div class="Product-images">
+    <div *ngFor="let product of products">
+      <img [src]="product.img" [alt]="product.name"><br>
+      <p class="head">
+        <span>{{ product.name }}</span><br>
+        <span class="off">-{{ product.discount }}</span> &#8377;{{ product.price }}<br>
+        <del><sup>&#8377;</sup>{{ product.originalPrice }}</del>
+      </p>
+      <p>
+        <button type="button" class="btn btn-success" (click)="selectProduct(product)">Add to Cart</button>
+      </p>
+    </div>
+  </div>
+  
+cart.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../product.service';
+
+@Component({
+  selector: 'app-cort',
+  templateUrl: './cort.component.html',
+  styleUrls: ['./cort.component.css']
+})
+export class CortComponent implements OnInit {
+  selectedProduct: any = null;
+  counter:number=1;
+  errorMessage:string='';
+  constructor(private productService: ProductService) { }
+
+  ngOnInit(): void {
+    this.productService.selectedProduct$.subscribe((product) => {
+      this.selectedProduct = product;
+    });
+
+}
+ 
+  fun1(){
+ this.counter+=1;
+  }
+  fun2(){
+    this.counter-=1;
+  } 
+  fun3():void{
+  if(this.counter<10){ 
+ this.counter+=1;
+ this.errorMessage='';
+  }
+ else{
+ this.errorMessage='you can add upto 10 products in one order'
+ }
+  }
+  fun4():void{
+  if(this.counter>1){
+  
+    this.counter-=1;
+    this.errorMessage='';
+  }
+     } 
+     removeProduct(): void {
+      this.selectedProduct = null; // Remove the selected product
+      this.errorMessage = ''; // Clear any error message if present
+      this.counter = 1; // Reset counter if needed
+      
+    }   
+}
+
+cart.component.css
+
+
+.h4{
+    color: rgb(27, 133, 133);
+
+}
+
+.clr{
+    color:green;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+}
+
+
+
+.clr2{
+    color:rgb(164, 154, 206);
+}
+
+cart.component.html
+
+
+<div>
+    <h4 class="h4">Selected Product</h4>
+    <div *ngIf="selectedProduct">
+      <img [src]="selectedProduct.img" [alt]="selectedProduct.name"><br>
+      <p>
+        <span class="clr">{{ selectedProduct.name }}</span><br>
+        <span class="clr" >-{{ selectedProduct.discount }}</span> &#8377;<span class="clr1">{{ selectedProduct.price }}</span><br>
+        <del class="clr2"><sup>&#8377;</sup>{{ selectedProduct.originalPrice }}</del><br>
+     <button type="button"class="btn btn-success" (click)="fun3()">+ve</button>
+    <span>{{counter}} </span>
+       <button type="button"class="btn btn-success" (click)="fun4()">-ve</button>
+         <br>
+         <span style="color: rgb(68, 0, 255);">{{errorMessage}}</span><br>
+         <span><h6>Total price: {{counter*selectedProduct.price }}</h6></span><br>
+        <span>  <button type="button" class="btn btn-success">Add to cart</button></span>
+      &nbsp;
+       <button type="button" class="btn btn-success">Payment</button>&nbsp;
+       <button type="button" class="btn btn-danger" (click)="removeProduct()">Remove</button>
+      <!--
+       <button type="reset" class="btn btn-success">Delete</button>-->
+      </p>
+    </div>
+    <div *ngIf="!selectedProduct">
+      <p>No product selected</p>
+    </div>
+  </div>
+  
+
+D:Angularp>ecomApp>ng serve
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
