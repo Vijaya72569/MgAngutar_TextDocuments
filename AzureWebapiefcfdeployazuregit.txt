@@ -1,0 +1,315 @@
+step1:Create Azure Sqlserver,database
+=========================================================================================================
+step2:Create WebApi
+
+open visual studio 2022->
+create new project->asp.net webapplication(model-view-controller)->next->
+project name:WebApiSwagger
+next->.dot net core 8.0(long-term-support)->create
+===============================================================================================================
+step3:Install packages
+
+go to tools->Nuget Package Manager->Manage Nuget Package for->
+select->All(package source1->https://api.nuget.org/v3/index.json
+package source2->https://package.nuget.org/api/v2)
+
+Microsoft.EntityFrameworkCore->select project->version:9.0.11->install->ok->I Accept
+Microsoft.EntityFramework.Design->select project->version:9.0.11->install->ok->I Accept
+Microsoft.EntityFramework.SqlServer->select project->version:9.0.11->install->ok->I Accept
+Microsoft.EntityFramework.Tools->select project->version:9.0.11->install->ok->I Accept
+Browse->Swashbuckle.AspNetCore-> 
+select project->version->10.0.0->install->IAccept->ok
+
+build->build solution
+===========================================================================================================
+step4: give Connection details
+
+appsettings.json
+
+  "ConnectionStrings": {
+  "getcon": "Server=tcp:sqlserveradmin1234.database.windows.net,1433;Initial Catalog=EmpDb;Persist Security Info=False;User ID=sqladmin;Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+}
+================================================================================================================================================================================================
+step5:Create Model class
+
+ public class Employee
+ {
+     [Key]
+     public int Id { get; set; }
+     public string? Name { get; set; }
+    
+     public decimal Salary { get; set; }
+ }
+==========================================================================================
+step6:Create DbContext
+
+using Microsoft.EntityFrameworkCore;
+
+namespace AzureWebapi.Models
+{
+    public class EmpDbContext: DbContext
+    {
+        public EmpDbContext(DbContextOptions<EmpDbContext> options) : base(options)
+        {
+        }
+        public DbSet<Employee> Employees { get; set; }
+    }
+}
+===================================================================
+program.ts
+
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+builder.Services.AddEndpointsApiExplorer(); //add this line swagger purpose
+builder.Services.AddSwaggerGen();  // add this line swagger purpose
+
+builder.Services.AddDbContext<EmpDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+//add this lines after if condition
+
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+=============================================================================================
+Add Migration and Create Database
+
+go to tools-> nuget package manager->manage nuget package manager console->
+
+1. install tool globally using cli
+      dotnet tool install --global dotnet-ef
+2. Add a Migration
+    dotnet ef migrations add InitialCreate
+3.  Apply the Migration to the Database
+      dotnet ef database update
+==========================================================================================
+right click on controller-> add controller ->Api->Api controller empty->name:EmpController->add
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AzureWebapi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmployeesController : ControllerBase
+    {
+        private readonly Models.EmpDbContext _context;
+        public EmployeesController(Models.EmpDbContext context)
+        {
+            _context = context;
+        }
+        [HttpGet]
+        public IActionResult Get()
+        {
+            var employees = _context.Employees.ToList();
+            return Ok(employees);
+        }
+        [HttpPost]
+        public IActionResult Post(Models.Employee employee)
+        {
+            _context.Employees.Add(employee);
+            _context.SaveChanges();
+            return Ok(employee);
+        }
+        [HttpPut]
+        public IActionResult Put(Models.Employee employee)
+        {
+            var existingEmployee = _context.Employees.Find(employee.Id);
+            if (existingEmployee == null)
+            {
+                return NotFound();
+            }
+            existingEmployee.Name = employee.Name;
+            existingEmployee.Salary = employee.Salary;
+            _context.SaveChanges();
+            return Ok(existingEmployee);
+        }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var employee = _context.Employees.Find(id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            _context.Employees.Remove(employee);
+            _context.SaveChanges();
+            return Ok();
+        }
+    }
+}
+=============================================================================================
+run the application
+=============================================================================================
+Create Empty folder in side that Folder Copy Webapi project
+go to path type cmd->enter
+===============================================================================================
+Create new Repository in GitHub
+name Azurewebapi
+git init
+git add .
+git branch -M main
+git commit -m "first commit"
+git remote add origin https://github.com/Vijaya72569/Demo.git
+git push -u origin main 
+
+============================================================================================
+Deploy Webapi in azure app service
+go to azure portal sign in azure account
+
+go app service-> create->
+subcription:your subid
+resource group: myrg(or create new)
+name:azurewebapi2025
+publish:code
+runtime stack:dotnet 8 lts
+operating sym:windows
+region:select region
+windows plan:select free or buying plan
+pricing plan:Free teir
+review+create
+create
+after create app service then open your app service(azurewebapi2025)
+go to Deployment Center-> Source-> Organization->vijaya56789
+Repository:Azurewebapi
+Branch:main
+Authentication Type:User-assigned identity
+
+preview file(yaml file-yet another markup language)
+this file configuration details about your project
+restore required packages for your project
+how to build -> how complile ->how publish project folder
+
+==============================================================================================
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy ASP.Net Core app to Azure Web App - azurewebapi2025
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+ ===============================================================================================   
+customize this 6lines code
+     
+          -name: Restore dependencies
+          run: dotnet restore AzureWebapi/AzureWebapi.csproj
+
+      - name: Build with dotnet
+        run: dotnet build AzureWebapi/AzureWebapi.csproj --configuration Release
+
+      - name: publish project
+        run: dotnet publish AzureWebapi/AzureWebapi.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+================================================================================================
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_067C23F4C6D1495BB12D89EB9B87BC72 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CB717D3D13B64AD085870E812ED5B698 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_61848D2DDCB24AEEB0173C0FEF7F5469 }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'azurewebapi2025'
+          slot-name: 'Production'
+          package: .
+========================================================================================================
+🧩 Step-by-step explanation of your added 6 lines
+1️.Restore dependencies
+- name: Restore dependencies
+  run: dotnet restore Emp_Webapi/Emp_Webapi.csproj
+
+
+🧠 This downloads all NuGet packages (external libraries) your project depends on —
+for example, Microsoft.EntityFrameworkCore.SqlServer, Swashbuckle.AspNetCore, etc.
+Without this, the build would fail because those packages aren’t included in your repo.
+
+2️.Build the project
+- name: Build with dotnet
+  run: dotnet build Emp_Webapi/Emp_Webapi.csproj --configuration Release --no-restore
+
+
+🧠 This compiles your .csproj (C# project) into DLLs.
+It uses --configuration Release to produce optimized binaries (smaller and faster).
+--no-restore skips dependency restore because you already did it in the previous step.
+
+3️.Publish the project
+- name: Publish project
+  run: dotnet publish Emp_Webapi/Emp_Webapi.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+
+
+🧠 This generates the final deployable folder with:
+
+DLLs
+
+web.config
+
+static files (wwwroot)
+
+appsettings.json
+and places them in the directory ${{env.DOTNET_ROOT}}/myapp.
+
+Azure then takes this published output and uploads it to your App Service or Static Web App API folder.
+
+🏁 Why these 3 commands matter
+Command	                    Purpose	                                                            Without it
+dotnet restore	Gets required packages	                    Build fails: “Cannot find referenced assemblies”
+dotnet build	Compiles C# code	                                        No compiled output to deploy
+dotnet publish	Creates final production folder	                    Azure can’t find what to deploy
+💡 Summary
+
+Those 6 lines basically told GitHub Actions:
+
+“Before deploying, please restore NuGet packages, compile the project, and publish it to a ready-to-upload folder.”
+
+That’s why your Emp_Webapi deployment succeeded after adding them.
+
+========================================================================================================
+go to gitaccount-> actions see the workflows if any push (code) then automatically run this yaml file
+if successfully run workflow then go to azure portal->go to app service-> select your azurewebapi2025-> overflow-> see the URL click this one->see the o/p 
+
+=================================================================================================================
+Server=tcp:sqlserveradmin1234.database.windows.net,1433;Initial Catalog=EmpDb;Persist Security Info=False;User ID=sqladmin;Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+=========================================
