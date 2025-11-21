@@ -1,0 +1,182 @@
+Create WebApi in .NetCore8(LTM) (Statically)
+===================================================================================
+Open visual studio 2022->
+Create new project->ASP.NET Core Web API->next->
+Project name:ProductWebApi
+Next->.dot net core 8.0->
+Location: Choose folder path->Click Next
+
+Authentication Type: Choose "None"
+
+Check ✅ “Use controllers (uncheck minimal APIs)” — if you want controller-based API (like you’re building)
+
+Click Create
+==================================================================================
+Add a Models Folder:
+Right-click on the project name ProductWebApi
+
+Select Add → New Folder
+Name it Models
+================================================================================
+Right-click on the new Models folder → Add → Class->Name:Product.cs
+ Product.cs
+========================================================================
+namespace ProductWebApi.Models
+{
+    public class Product
+    {
+        public int PId { get; set; }
+        public string? Name { get; set; }
+        public decimal Price { get; set; }
+    }
+}
+==========================================================================
+Right-click on the new Models folder → Add → Class->Name:IProductService.cs
+
+IProductService.cs
+
+namespace ProductWebApi.Models
+{
+    public interface IProductService
+    {
+        List<Product> GetAll();
+        Product GetById(int id);
+        void Add(Product product);
+        void Update(Product product);
+        void Delete(int id);
+    }
+}
+==========================================================================================
+Right-click on the new Models folder → Add → Class->Name:ProductService.cs
+ProductService.cs
+
+using ProductWebApi.Models;
+namespace ProductWebApi.Models
+{
+    public class ProductService : IProductService
+    {
+        private readonly List<Product> _products = new()
+       {
+           new Product {PId=1,Name="Laptop",Price=40000.99m},
+            new Product{PId=2,Name="Mobile",Price=30000.99m}
+
+       };
+
+        public List<Product> GetAll() => _products;
+
+        public Product? GetById(int id) => _products.FirstOrDefault(m => m.PId == id);
+        public void Add(Product product)
+        {
+            product.PId = _products.Max(m => m.PId) + 1;
+            _products.Add(product);
+       }
+        public void Update(Product product)
+        {
+            var pro=GetById(product.PId);
+            if(pro != null)
+            {
+                pro.Name = product.Name;
+                pro.Price = product.Price;
+            }
+        }
+        public void Delete(int id)
+        {
+            var pro=GetById(id);
+            if(pro != null)
+                _products.Remove(pro);
+        }
+       
+    }
+}
+===============================================================================================
+Right click on controller->add controller->API=>API controller empty->name:ProductController.cs->enter
+ProductController.cs
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using ProductWebApi.Models;
+
+namespace ProductWebApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IProductService _productService;
+    public   ProductController(IProductService productService)
+        {
+         _productService = productService;
+        }
+        [HttpGet]
+        public List<Product> Get() => _productService.GetAll();
+
+        [HttpGet("{id}")]
+        public ActionResult <Product> Get(int id)
+        {
+            var product= _productService.GetById(id);
+            if (product == null)
+           
+                return NotFound();
+
+            return product;
+        }
+        [HttpPost]
+        public IActionResult Post(Product product)
+        {
+            _productService.Add(product);
+            return Ok(product); 
+           
+        }
+        [HttpPut("{id}")]
+        public IActionResult Put(Product product, int id)
+        {
+            if (id != product.PId) 
+            {
+                return BadRequest();
+            }
+            _productService.Update(product);
+         
+            return Ok(product);
+
+        }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            _productService.Delete(id);
+            
+            return Ok(id);
+
+        }
+
+    }
+}
+=================================================================================================
+Program.cs
+
+//Add this line code
+
+builder.Services.AddSingleton<IProductService, ProductService>();
+
+Run Application
+===============================================================================================
+https://localhost:44363/swagger/index.html
+
+=>View all your API endpoints (GET, POST,PUT,DELETE)
+
+Click on the endpoint
+
+Click the "Try it out" button
+
+Then click "Execute"
+
+You will see the JSON result below
+
+=================================================================================================
+Create Repo in GitHub
+push code in HitRepo
+
+====================================================================================================
+Deploy Webapi in Azure using App Service
+
+
+
+
