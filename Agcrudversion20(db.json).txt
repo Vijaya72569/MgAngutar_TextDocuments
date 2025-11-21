@@ -1,0 +1,186 @@
+1.Create a New Angular Project
+
+ng new angular-crud-json
+cd angular-crud-json
+ng serve
+=================================
+2.Install JSON Server
+JSON Server is a lightweight fake REST API tool.
+=================================
+npm install -g json-server
+===================================
+3.Create db.json File
+db.json
+
+{
+  "employees": [
+    { "id": 1, "name": "Ravi", "email": "ravi@gmail.com", "city": "Hyderabad" },
+    { "id": 2, "name": "Kavya", "email": "kavya@gmail.com", "city": "Chennai" }
+  ]
+}
+=================================================
+4.Start JSON Server
+json-server --watch db.json --port 3000
+Now your fake backend is live at:
+http://localhost:3000/employees
+===========================================
+5.Create an Employee Component
+ng generate component employees
+===============================================
+6.Create a Service for API Calls
+ng generate service services/employee
+=====================================================
+app.service.ts
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export interface Employee {
+  id?: number;
+  name: string;
+  email: string;
+  city: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EmployeeService {
+  private apiUrl = 'http://localhost:3000/employees';
+
+  constructor(private http: HttpClient) {}
+
+  getAll(): Observable<Employee[]> {
+    return this.http.get<Employee[]>(this.apiUrl);
+  }
+
+  create(emp: Employee): Observable<Employee> {
+    return this.http.post<Employee>(this.apiUrl, emp);
+  }
+
+  update(emp: Employee): Observable<Employee> {
+    return this.http.put<Employee>(`${this.apiUrl}/${emp.id}`, emp);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+}
+=========================================================
+employee.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { EmployeeService, Employee } from '../services/employee.service';
+
+@Component({
+  selector: 'app-employees',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './employees.component.html',
+})
+export class EmployeesComponent implements OnInit {
+  employees: Employee[] = [];
+  emp: Employee = { name: '', email: '', city: '' };
+  editMode = false;
+
+  constructor(private service: EmployeeService) {}
+
+  ngOnInit(): void {
+    this.loadEmployees();
+  }
+
+  loadEmployees() {
+    this.service.getAll().subscribe(data => this.employees = data);
+  }
+
+  saveEmployee() {
+    if (this.editMode) {
+      this.service.update(this.emp).subscribe(() => {
+        this.editMode = false;
+        this.emp = { name: '', email: '', city: '' };
+        this.loadEmployees();
+      });
+    } else {
+      this.service.create(this.emp).subscribe(() => {
+        this.emp = { name: '', email: '', city: '' };
+        this.loadEmployees();
+      });
+    }
+  }
+
+  editEmployee(e: Employee) {
+    this.emp = { ...e };
+    this.editMode = true;
+  }
+
+  deleteEmployee(id: number) {
+    if (confirm('Are you sure to delete this employee?')) {
+      this.service.delete(id).subscribe(() => this.loadEmployees());
+    }
+  }
+}
+==============================================================
+employee.html
+
+<div class="container mt-4">
+  <h2 class="text-center mb-3">Angular 20 CRUD using db.json</h2>
+
+  <form (ngSubmit)="saveEmployee()" class="mb-4">
+    <input [(ngModel)]="emp.name" name="name" placeholder="Name" required class="form-control mb-2" />
+    <input [(ngModel)]="emp.email" name="email" placeholder="Email" required class="form-control mb-2" />
+    <input [(ngModel)]="emp.city" name="city" placeholder="City" required class="form-control mb-2" />
+
+    <button type="submit" class="btn btn-primary">{{ editMode ? 'Update' : 'Add' }}</button>
+  </form>
+
+  <table class="table table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th><th>Name</th><th>Email</th><th>City</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let e of employees">
+        <td>{{ e.id }}</td>
+        <td>{{ e.name }}</td>
+        <td>{{ e.email }}</td>
+        <td>{{ e.city }}</td>
+        <td>
+          <button (click)="editEmployee(e)" class="btn btn-warning btn-sm">Edit</button>
+          <button (click)="deleteEmployee(e.id!)" class="btn btn-danger btn-sm">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+==========================================================
+app.config.ts
+
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { routes } from './app.routes';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient()
+  ]
+};
+=====================================================
+app.cs
+
+  imports: [RouterOutlet,Emplyee],
+======================================================
+app.html
+
+<div>
+  <app-header></app-header>
+  </div>
+
+
+
+
