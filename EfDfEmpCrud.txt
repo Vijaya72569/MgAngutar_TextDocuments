@@ -1,0 +1,87 @@
+Step1: Create Database
+Step2:Create Table and insert records
+Step3:Create Asp.Net Core Application 
+=======================================
+open visual studio 2022->
+create new project->asp.net webapplication(model-view-controller)->next->
+project name:EFDFEmpWebApp
+next->.dot net core 8.0->create
+=======================================
+Step4:Install Ef Core Packages
+====================================================
+click on tools->install nuget manager->manage nuget packages for solution
+click on-setting icon
+click on-add icon
+name:package source1
+source:https://packages.nuget.org/api/v2
+->update
+click on-add icon
+name:package source2
+source:https://api.nuget.org/v3/index.json
+->update
+->ok
+click on Browse:
+Microsoft.Data.EntityFrameworkCore->select project->version->install->ok->I Accept
+Microsoft.Data.EntityFrameworkCore.SqlServer->select project->version->install->ok->I Accept
+Microsoft.Data.EntityFrameworkCore.Tools->select project->version->install->ok->I Accept
+Microsoft.Data.EntityFrameworkCore.Design->select project->version->install->ok->I Accept
+=============================================
+Step5:Scaffold Model from Sql(DbFirst)
+==================================================================
+click on tools->install nuget manager-> Package Manage Console for solution
+Run this command
+============================================
+Scaffold-DbContext "Server=DESKTOP-11SVQ2U;Database=demodb1;Integrated security=true;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer 
+-OutputDir Models -Tables Employee 
+
+==========================================
+This will generate
+=>Employee.cs model
+=>Demodb1Context.cs context file inside model folder
+===============================================
+Step6:Create EmployeeController using scaffolding
+=========================================================
+Right-click Controller-> MVC Controller with views,using EF
+select:
+=>Model class:Employee
+=>Data Context class:Demodb1Context
+=>Controller name:EmployeeController
+click ->Add
+this will auto-generate
+=>EmployeeController.cs
+=>Views->Emplyee->(Create,Edit,Delete,Details,Index)
+================================================
+Step7:Configure Connection String
+in appsetting.json,with Sql Connection string
+==============================================
+"AllowedHosts": "*",
+"ConnectionStrings": {
+  "getconn": "Server=localhost;Database=demodb1;Integrated security=true;TrustServerCertificate=True"
+}
+====================================================
+Program.cs
+
+ Add services to the container.
+builder.Services.AddControllersWithViews();
+// Register DbContext
+builder.Services.AddDbContext<Demodb1Context>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("getconn")
+));
+----------------
+----------------
+----------
+-----------
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Emplyee}/{action=Index}/{id?}"); // replace your controller name action name
+
+=========================================
+Step8:Run and Text CRUD Operations
+Run the project (Ctrl+F5)
+Open :https://localhost:xxxx/Employee
+you can now 
+=>Create new employee
+=>View all employees
+=>Edit employee details
+=>Delete employee
+==================
